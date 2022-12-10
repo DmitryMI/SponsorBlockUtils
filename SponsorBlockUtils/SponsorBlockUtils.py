@@ -5,6 +5,11 @@ from pathlib import Path
 import os
 
 DEFAULT_SPONSORBLOCK_CATEGORIES = ["Sponsor", "Intro"]
+
+# Segments shorter then this value will not be cut out
+DEFAULT_SPONSORBLOCK_MIN_DURATION = 5
+
+
 FFMPEG_LOG_LEVEL = "error"
 
 def get_ffmpeg_filter_av_pair(index, time_start, time_end):
@@ -154,6 +159,7 @@ segments = []
 timestamp = 0.0
 
 sponsorblock_categories = DEFAULT_SPONSORBLOCK_CATEGORIES
+sponsorblock_min_duration = DEFAULT_SPONSORBLOCK_MIN_DURATION
 
 for chapter in chapters:
     chapter_tags = chapter["tags"]
@@ -166,10 +172,15 @@ for chapter in chapters:
 
     chapter_category = chapter_title.replace("[SponsorBlock]: ", "")
 
+    chapter_start_time = float(chapter_start_time_str)
+    chapter_duration = chapter_start_time - timestamp
+    if chapter_duration < sponsorblock_min_duration:
+        continue
+
     for sponsorblock_category in sponsorblock_categories:
         if sponsorblock_category in chapter_category:
-            print(chapter_title, chapter_start_time_str, chapter_end_time_str)
-            segments.append((timestamp, float(chapter_start_time_str)))
+            print(chapter_title, chapter_start_time_str, chapter_end_time_str, ", duration: ", chapter_duration)
+            segments.append((timestamp, chapter_start_time))
             timestamp = float(chapter_end_time_str)
 
 duration = get_video_duration(input_path)
@@ -187,6 +198,11 @@ for segment in segments:
 if not segments_refined:
     print("SponsorBlock chapters not found, nothing to do")
     quit(0)
+
+if len(segments_refined) == 1:
+    if segments_refined[0][0] == 0 and segments_refined[0][1] == duration:
+        print("Nothing will be trimmed")
+        quit(0)
 
 output_path = get_output_path(input_path)
 print("Output path: ", output_path)

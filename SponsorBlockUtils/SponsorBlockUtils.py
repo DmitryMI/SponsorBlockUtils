@@ -104,11 +104,11 @@ def get_ffmpeg_concat(path_input, path_output):
 
 def create_concat_list(path_input, segments_number):
      list_path = path_input + ".list.txt"
-     with open(list_path, "w", encoding="utf-16") as f:
+     with open(list_path, "w", encoding="utf-8") as f:
          for i in range(segments_number):
              part_path = insert_name_suffix(path_input, f"-part{i}")
              part_path = part_path.replace("\\", "/")
-             line = f"file {part_path}\n"
+             line = f"file '{part_path}'\n"
              f.write(line)
 
 def delete_concat_list(path_input):
